@@ -5,11 +5,7 @@
 [![Go Report Card](https://goreportcard.com/badge/github.com/codeGROOVE-dev/retry?style=flat-square)](https://goreportcard.com/report/github.com/codeGROOVE-dev/retry)
 [![Go Reference](https://pkg.go.dev/badge/github.com/codeGROOVE-dev/retry.svg)](https://pkg.go.dev/github.com/codeGROOVE-dev/retry)
 
-**Zero dependencies. Memory-bounded. No goroutine leaks. No panics.**
-
-*Hard guarantees: Bounded memory (1000 errors max). No allocations in hot path. Context-aware cancellation.*
-
-Actively maintained fork of [avast/retry-go](https://github.com/avast/retry-go) focused on correctness and resource efficiency. 100% API compatible drop-in replacement.
+Modern fork of [avast/retry-go/v4](https://github.com/avast/retry-go) focused on correctness, reliability and efficiency. 100% API-compatible drop-in replacement.
 
 **Production guarantees:**
 - Memory bounded: Max 1000 errors stored (configurable via maxErrors constant)
@@ -21,6 +17,12 @@ Actively maintained fork of [avast/retry-go](https://github.com/avast/retry-go) 
 - Zero allocations after init in success path
 
 ## Quick Start
+
+### Installation
+
+```bash
+go get github.com/codeGROOVE-dev/retry
+```
 
 ### Simple Retry
 
@@ -86,31 +88,27 @@ retry.AttemptsForError(1, sql.ErrTxDone)     // One retry for tx errors
 retry.AttemptsForError(5, ErrServiceUnavailable) // More retries for 503s
 ```
 
-## Failure Modes & Limits
+## Changes from avast/retry-go/v4
 
-| Scenario | Behavior | Limit |
-|----------|----------|-------|
-| Error accumulation | Old errors dropped after limit | 1000 errors |
-| Attempt overflow | Stops retrying | uint max (~4B) |
-| Backoff overflow | Capped at max duration | 2^62 ns |
-| Context cancelled | Returns immediately | No retries |
-| Timer returns nil | Returns error | Fail safe |
-| Panic in retryable func | Propagates panic | No swallowing |
+This fork will always be a 100% compatible drop-in replacement. There are some minor tweaks that have been made though:
 
-## Installation
+New APIs added:
 
-Requires Go 1.22 or higher.
+- `UntilSucceeded() Option` - Convenience wrapper for Attempts(0) (infinite retries)
+- `FullJitterBackoffDelay() Strategy` - New delay type with full jitter exponential backoff
+- `WrapContextErrorWithLastError() Option` - Wraps context errors with last function error
+- `IfFunc Type` - New stutter-proof name (RetryIfFunc is now an alias)
 
-```bash
-go get github.com/codeGROOVE-dev/retry
-```
+Safety improvements:
+
+- Memory bounded: Max 1000 errors (prevents OOM)
+- Uses `math/rand/v2` (no lock contention)
+- Overflow protection: Backoff capped at 2^62
+- Enhanced validation and nil checks
+- Better context cancellation with `context.Cause()`
 
 ## Documentation
 
 - [API Docs](https://pkg.go.dev/github.com/codeGROOVE-dev/retry)
 - [Examples](https://github.com/codeGROOVE-dev/retry/tree/master/examples)
 - [Tests](https://github.com/codeGROOVE-dev/retry/tree/master/retry_test.go)
-
----
-
-*Production retry logic that just works.*
